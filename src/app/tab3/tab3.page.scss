@@ -1,0 +1,355 @@
+ion-content.alertas {
+  --background: var(--app-fondo);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+ion-button {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.pagina {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(22px + env(safe-area-inset-top)) 20px 32px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.intro {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--app-texto-suave);
+}
+
+h2 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 28px 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--app-texto-suave);
+
+  small {
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+}
+
+/* ---- Activar notificaciones ---- */
+
+.activar {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px 14px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--app-superficie);
+  box-shadow: 0 1px 2px rgba(27, 20, 16, 0.06), 0 0 0 1px var(--app-borde);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong {
+    font-size: 16px;
+  }
+
+  span {
+    font-size: 13.5px;
+    line-height: 1.4;
+    color: var(--app-texto-suave);
+  }
+
+  ion-button {
+    grid-column: 1 / -1;
+    height: 46px;
+    margin: 0;
+  }
+}
+
+.activar-icono {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--app-amarillo);
+  color: var(--ion-color-primary) !important;
+  font-size: 24px;
+}
+
+/* ---- Interruptores ---- */
+
+.opciones {
+  overflow: hidden;
+  border: 1px solid var(--app-borde);
+  border-radius: 16px;
+  background: var(--app-superficie);
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  color: var(--app-texto);
+  text-align: left;
+
+  & + & {
+    border-top: 1px solid var(--app-borde);
+  }
+}
+
+.opcion-icono {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(var(--ion-color-primary-rgb), 0.09);
+  color: var(--ion-color-primary);
+  font-size: 19px;
+
+  &.peligro {
+    background: var(--app-ambar-fondo);
+    color: var(--app-ambar-texto);
+  }
+}
+
+.opcion-texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.25;
+
+  strong {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  small {
+    font-size: 12.5px;
+    color: var(--app-texto-suave);
+  }
+}
+
+.interruptor {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--app-borde-fuerte);
+  transition: background 0.15s;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(27, 20, 16, 0.3);
+    transition: transform 0.15s;
+  }
+
+  &.encendido {
+    background: var(--ion-color-primary);
+
+    &::after {
+      transform: translateX(18px);
+    }
+  }
+}
+
+.nota {
+  margin: 8px 2px 0;
+  font-size: 12.5px;
+  color: var(--app-texto-suave);
+}
+
+/* ---- Recordatorios ---- */
+
+.filas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  li + li {
+    border-top: 1px solid var(--app-borde);
+  }
+}
+
+.fila {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 0;
+  border: none;
+  background: none;
+  color: var(--app-texto);
+  text-align: left;
+}
+
+.fila-foto {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--app-borde);
+  color: var(--app-texto-suave);
+  font-size: 20px;
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.fila-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+
+  strong {
+    overflow: hidden;
+    font-size: 15.5px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--ion-color-primary);
+    font-weight: 600;
+
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+}
+
+.quitar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--app-borde);
+  color: var(--app-texto);
+  font-size: 18px;
+}
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 28px 20px;
+  border: 1.5px dashed var(--app-borde-fuerte);
+  border-radius: 16px;
+  text-align: center;
+  color: var(--app-texto-suave);
+
+  ion-icon {
+    font-size: 34px;
+  }
+
+  p {
+    margin: 6px 0 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--app-texto);
+  }
+
+  small {
+    font-size: 13px;
+  }
+}
+
+
+/* ---- Apariencia ---- */
+
+.temas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+
+  button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 6px;
+    border: 1.5px solid var(--app-borde);
+    border-radius: 16px;
+    background: var(--app-superficie);
+    color: var(--app-texto);
+    font-size: 13.5px;
+    font-weight: 600;
+
+    ion-icon {
+      font-size: 24px;
+      color: var(--app-texto-suave);
+    }
+
+    &.elegido {
+      border-color: var(--ion-color-primary);
+      background: rgba(var(--ion-color-primary-rgb), 0.08);
+      color: var(--ion-color-primary);
+
+      ion-icon {
+        color: var(--ion-color-primary);
+      }
+    }
+  }
+}

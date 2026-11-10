@@ -1,0 +1,33 @@
+ion-tab-bar {
+  --background: var(--app-superficie);
+  --border: 1px solid var(--app-borde);
+  --color: var(--app-texto-suave);
+  --color-selected: var(--ion-color-primary);
+  height: 60px;
+}
+
+ion-tab-button {
+  --color: var(--app-texto-suave);
+  --color-selected: var(--ion-color-primary);
+  --color-focused: var(--app-texto-suave);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.insignia {
+  position: absolute;
+  top: 6px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 2px solid var(--app-superficie);
+  border-radius: 999px;
+  background: var(--ion-color-primary);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}

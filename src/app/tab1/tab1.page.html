@@ -1,0 +1,754 @@
+<ion-content class="mapa" [fullscreen]="true" [scrollY]="false">
+  <div id="map"></div>
+
+  <!-- Vista normal: encabezado flotante y botones -->
+  @if (modo() === 'ver') {
+    <div class="arriba" slot="fixed">
+      <div class="buscador" [class.abierto]="busqueda().trim()">
+        <label class="buscador-barra">
+          <span class="encabezado-logo" aria-hidden="true">
+            <ion-icon name="location"></ion-icon>
+          </span>
+          <input
+            type="search"
+            enterkeyhint="search"
+            autocomplete="off"
+            placeholder="Busca tus lugares en Bogotá"
+            aria-label="Buscar puntos guardados"
+            [value]="busqueda()"
+            (input)="alBuscar($event)"
+          />
+          @if (busqueda()) {
+            <button type="button" class="buscador-limpiar" (click)="limpiarBusqueda()" aria-label="Borrar búsqueda">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          } @else {
+            <ion-icon class="buscador-lupa" name="search-outline" aria-hidden="true"></ion-icon>
+          }
+        </label>
+
+        @if (busqueda().trim()) {
+          <ul class="buscador-resultados">
+            @for (r of resultados(); track r.id) {
+              <li>
+                <button type="button" class="resultado" (click)="abrirResultado(r.id)">
+                  <span class="resultado-foto">
+                    <ion-icon [name]="r.icono" aria-hidden="true"></ion-icon>
+                    @if (r.foto) {
+                      <img [src]="r.foto" alt="" />
+                    }
+                  </span>
+                  <span class="resultado-texto">
+                    <strong>{{ r.titulo }}</strong>
+                    <span>{{ r.subtitulo }}</span>
+                  </span>
+                  <ion-icon class="resultado-flecha" name="chevron-forward" aria-hidden="true"></ion-icon>
+                </button>
+              </li>
+            } @empty {
+              <li class="buscador-vacio">
+                <strong>Sin resultados para “{{ busqueda().trim() }}”</strong>
+                <span>Prueba con otra palabra: un nombre, una categoría o una dirección.</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      @if (datos.actualizando() && datos.enLinea()) {
+        <p class="aviso-actualizando" role="status">
+          <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+          Trayendo los puntos de la comunidad…
+        </p>
+      }
+
+      @if (!datos.enLinea()) {
+        <p class="aviso-offline">
+          <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
+          Sin conexión · el mapa y las rutas pueden no cargar
+        </p>
+      }
+    </div>
+
+    @if (tarjetaYo()) {
+      <div class="tarjeta-yo" slot="fixed" role="dialog" aria-label="Tu ubicación">
+        <span class="tarjeta-yo-icono" aria-hidden="true"><span></span></span>
+        <div class="tarjeta-yo-texto">
+          <strong>Estás aquí</strong>
+          <span>{{ textoDireccionYo() }}</span>
+          @if (datos.miUbicacion(); as yo) {
+            <small>Precisión ±{{ yo.precision }} m</small>
+          }
+        </div>
+        <button type="button" class="tarjeta-yo-cerrar" (click)="cerrarTarjetaYo()" aria-label="Cerrar">
+          <ion-icon name="close"></ion-icon>
+        </button>
+        <ion-button class="tarjeta-yo-boton" expand="block" shape="round" (click)="agregarAqui()">
+          <ion-icon slot="start" name="add"></ion-icon>
+          Agregar un punto aquí
+        </ion-button>
+      </div>
+    }
+
+    <div class="flotante-abajo" slot="fixed">
+      <span class="separador"></span>
+      <ion-button class="boton-agregar" shape="round" (click)="empezarAgregar()">
+        <ion-icon slot="start" name="add"></ion-icon>
+        Agregar punto
+      </ion-button>
+      <button type="button" class="boton-redondo" (click)="irAMiUbicacion()" aria-label="Ir a mi ubicación">
+        <ion-icon name="locate-outline"></ion-icon>
+      </button>
+    </div>
+  }
+
+  <!-- Navegación paso a paso -->
+  @if (modo() === 'navegando' && guia(); as g) {
+    <div class="nav-arriba" slot="fixed" role="status" aria-live="polite">
+      <div class="nav-indicacion">
+        <span class="nav-flecha" aria-hidden="true">
+          @if (g.paso?.glorieta) {
+            <ion-icon name="sync-outline"></ion-icon>
+          } @else if (g.paso?.vuelta) {
+            <ion-icon name="return-up-back-outline"></ion-icon>
+          } @else {
+            <ion-icon name="arrow-up" [style.transform]="'rotate(' + (g.paso?.giro ?? 0) + 'deg)'"></ion-icon>
+          }
+        </span>
+        <div>
+          <strong>{{ g.distanciaPaso }}</strong>
+          <span>{{ g.paso?.texto }}</span>
+        </div>
+      </div>
+      @if (g.siguiente) {
+        <p class="nav-luego">Luego: {{ g.siguiente.texto }}</p>
+      }
+      @if (recalculando()) {
+        <p class="nav-luego">Recalculando la ruta…</p>
+      }
+    </div>
+
+    <div class="nav-abajo" slot="fixed">
+      @if (!seguirUsuario()) {
+        <button type="button" class="nav-centrar" (click)="centrarEnMi()">
+          <ion-icon name="locate" aria-hidden="true"></ion-icon>
+          Centrar
+        </button>
+      }
+      <div class="nav-panel">
+        <div class="nav-resumen">
+          <strong>{{ g.tiempo }}</strong>
+          <span>
+            <ion-icon [name]="g.icono" aria-hidden="true"></ion-icon>
+            {{ g.restante }} · llegas {{ g.llegada }}
+          </span>
+          <small>Hacia {{ g.destino }}</small>
+        </div>
+        <ion-button class="nav-salir" shape="round" color="danger" (click)="salirDeNavegacion()">Salir</ion-button>
+      </div>
+    </div>
+  }
+
+  <!-- Paso 1: ubicar el pin en el mapa -->
+  @if (modo() === 'ubicar' && borrador(); as b) {
+    <div class="arriba" slot="fixed">
+      <div class="tarjeta-ubicar">
+        <span class="tarjeta-paso">Paso 1 de 2</span>
+        <p class="tarjeta-titulo">¿Dónde está el punto?</p>
+        <p class="tarjeta-texto">Toca el mapa o arrastra el pin hasta el sitio exacto.</p>
+        <p class="tarjeta-coordenadas">
+          <ion-icon name="navigate-outline" aria-hidden="true"></ion-icon>
+          {{ datos.textoCoordenadas(b) }}
+        </p>
+      </div>
+    </div>
+
+    <div class="flotante-abajo" slot="fixed">
+      <button type="button" class="boton-pastilla" (click)="cancelarAgregar()">Cancelar</button>
+      <ion-button class="boton-agregar" shape="round" (click)="continuarAlFormulario()">
+        Continuar
+        <ion-icon slot="end" name="arrow-forward"></ion-icon>
+      </ion-button>
+      <button type="button" class="boton-redondo" (click)="usarMiUbicacion()" aria-label="Usar mi ubicación">
+        <ion-icon name="locate-outline"></ion-icon>
+      </button>
+    </div>
+  }
+
+  <!-- Paso 2: datos del punto -->
+  <ion-modal
+    class="hoja"
+    [isOpen]="modo() === 'formulario'"
+    (didDismiss)="alCerrarFormulario()"
+    [initialBreakpoint]="0.94"
+    [breakpoints]="[0, 0.94]"
+  >
+    <ng-template>
+      <ion-content>
+        @if (borrador(); as b) {
+          <div class="hoja-cuerpo">
+            <div class="formulario-encabezado">
+              <button type="button" class="boton-icono" (click)="cancelarAgregar()" aria-label="Cancelar">
+                <ion-icon name="close"></ion-icon>
+              </button>
+              <div>
+                <span class="tarjeta-paso">{{ b.id === null ? 'Paso 2 de 2' : 'Editar' }}</span>
+                <h2>{{ b.id === null ? 'Nuevo punto' : 'Editar punto' }}</h2>
+              </div>
+            </div>
+
+            <!-- Ubicación -->
+            <div class="bloque-ubicacion">
+              <span class="dato-icono"><ion-icon name="location" aria-hidden="true"></ion-icon></span>
+              <div>
+                @if (b.buscandoDireccion) {
+                  <p class="ubicacion-direccion">Buscando la dirección…</p>
+                } @else {
+                  <p class="ubicacion-direccion">{{ b.direccion || datos.textoCoordenadas(b) }}</p>
+                }
+                <p class="ubicacion-coordenadas">
+                  @if (b.precision !== null) {
+                    Precisión ±{{ b.precision }} m ·
+                  } @else {
+                    Elegido en el mapa ·
+                  }
+                  <button type="button" class="enlace" (click)="volverAUbicar()">Cambiar punto</button>
+                </p>
+              </div>
+            </div>
+
+            <!-- Fotos -->
+            <p class="etiqueta">Fotos</p>
+            <div class="fotos">
+              @for (foto of b.fotos; track $index) {
+                <div class="foto-mini">
+                  <img [src]="foto" [alt]="'Foto ' + ($index + 1)" />
+                  <button type="button" (click)="quitarFoto($index)" [attr.aria-label]="'Quitar foto ' + ($index + 1)">
+                    <ion-icon name="close"></ion-icon>
+                  </button>
+                </div>
+              }
+              @if (b.fotos.length < maxFotos) {
+                <button type="button" class="foto-opcion principal" (click)="agregarFoto('camara')">
+                  <ion-icon name="camera-outline" aria-hidden="true"></ion-icon>
+                  Cámara
+                </button>
+                <button type="button" class="foto-opcion" (click)="agregarFoto('galeria')">
+                  <ion-icon name="images-outline" aria-hidden="true"></ion-icon>
+                  Galería
+                </button>
+              }
+            </div>
+
+            <!-- Categoría -->
+            <p class="etiqueta">¿Qué es?</p>
+            <div class="categorias">
+              @for (c of datos.categorias; track c.id) {
+                <button
+                  type="button"
+                  class="categoria"
+                  [class.elegida]="b.categoria === c.id"
+                  [attr.aria-pressed]="b.categoria === c.id"
+                  (click)="editarBorrador({ categoria: c.id })"
+                >
+                  {{ c.nombre }}
+                </button>
+              }
+            </div>
+
+            <ion-input
+              class="campo"
+              label="Nombre (opcional)"
+              labelPlacement="stacked"
+              fill="outline"
+              placeholder="Ej.: Mirador de La Calera"
+              [maxlength]="60"
+              [value]="b.nombre"
+              (ionInput)="editarBorrador({ nombre: textoDe($event) })"
+            ></ion-input>
+
+            <ion-textarea
+              class="campo"
+              label="Nota"
+              labelPlacement="stacked"
+              fill="outline"
+              placeholder="¿Qué hay aquí? ¿Qué pasa?"
+              [autoGrow]="true"
+              [rows]="3"
+              [maxlength]="300"
+              [value]="b.nota"
+              (ionInput)="editarBorrador({ nota: textoDe($event) })"
+            ></ion-textarea>
+
+            @if (!datos.enLinea()) {
+              <p class="nota-offline">
+                <span class="punto-estado"></span>
+                Sin conexión: el punto se guarda igual y la dirección se completa después.
+              </p>
+            }
+
+            @if (b.id === null) {
+            <p class="nota-publica">
+              <ion-icon [name]="b.categoria === 'casa' ? 'lock-closed-outline' : 'people-outline'" aria-hidden="true"></ion-icon>
+              {{
+                b.categoria === 'casa'
+                  ? 'Tu casa es privada: solo la ves tú.'
+                  : 'Se comparte en el mapa de Rolo para que otros también lo vean.'
+              }}
+            </p>
+            }
+
+            <ion-button class="boton-guardar" expand="block" shape="round" (click)="guardarBorrador()">
+              {{ b.id === null ? 'Guardar punto' : 'Guardar cambios' }}
+            </ion-button>
+          </div>
+        }
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Vista previa del punto: aparece al tocar un pin -->
+  <ion-modal
+    class="hoja"
+    [isOpen]="detalle() !== null"
+    (didDismiss)="cerrarPunto()"
+    #modalPrevia
+    [initialBreakpoint]="0.34"
+    [breakpoints]="[0, 0.34, 0.62]"
+    [backdropBreakpoint]="0.9"
+  >
+    <ng-template>
+      <ion-content [scrollY]="false">
+        @if (detalle(); as d) {
+          <div class="previa">
+            <button type="button" class="previa-foto" (click)="abrirFicha()" [attr.aria-label]="'Ver más de ' + d.titulo">
+              <ion-icon [name]="d.categoriaIcono" aria-hidden="true"></ion-icon>
+              @if (d.fotos.length) {
+                <img [src]="d.fotos[0]" alt="" />
+              }
+              @if (d.fotos.length > 1) {
+                <span class="previa-cuenta">+{{ d.fotos.length - 1 }}</span>
+              }
+            </button>
+
+            <div class="previa-texto">
+              <div class="detalle-etiquetas">
+                <span class="etiqueta-chip">{{ d.categoriaNombre }}</span>
+                @if (d.destacado) {
+                  <span class="etiqueta-chip destacado">Destacado</span>
+                }
+                @if (d.comunidad) {
+                  <span class="etiqueta-chip comunidad">Comunidad</span>
+                }
+                @if (d.esReporte) {
+                  @if (d.resuelto) {
+                    <span class="etiqueta-chip enviado">Arreglado</span>
+                  } @else {
+                    <span class="etiqueta-chip pendiente">Sin arreglar</span>
+                  }
+                }
+              </div>
+              <h2>{{ d.titulo }}</h2>
+              <p>
+                @if (d.distancia) {
+                  A {{ d.distancia }}
+                }
+                @if (d.distancia && d.nombre && d.direccion) {
+                  ·
+                }
+                @if (d.nombre && d.direccion) {
+                  {{ d.direccion }}
+                }
+              </p>
+            </div>
+
+            <button
+              type="button"
+              class="boton-favorito campana"
+              [class.activo]="recordatorioActual()"
+              [attr.aria-label]="recordatorioActual() ? 'Cambiar recordatorio' : 'Poner recordatorio'"
+              (click)="elegirRecordatorio()"
+            >
+              <ion-icon [name]="recordatorioActual() ? 'notifications' : 'notifications-outline'"></ion-icon>
+            </button>
+            <button
+              type="button"
+              class="boton-favorito"
+              [class.activo]="d.favorito"
+              [attr.aria-pressed]="d.favorito"
+              [attr.aria-label]="d.favorito ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+              (click)="alternarFavorito()"
+            >
+              <ion-icon [name]="d.favorito ? 'heart' : 'heart-outline'"></ion-icon>
+            </button>
+          </div>
+
+
+          @if (recordatorioActual(); as r) {
+            <button type="button" class="previa-recordatorio" (click)="elegirRecordatorio()">
+              <ion-icon name="notifications" aria-hidden="true"></ion-icon>
+              {{ r.texto }}
+            </button>
+          }
+
+          <div class="previa-acciones">
+            <ion-button class="accion" shape="round" (click)="abrirFicha()">
+              Ver más
+              <ion-icon slot="end" name="chevron-up"></ion-icon>
+            </ion-button>
+            <ion-button class="accion" fill="outline" shape="round" [disabled]="cargandoRuta()" (click)="verRuta()">
+              <ion-icon slot="start" name="navigate-outline"></ion-icon>
+              {{ cargandoRuta() ? 'Calculando…' : 'Cómo llegar' }}
+            </ion-button>
+          </div>
+
+          @if (opcionesRuta().length) {
+            <div class="rutas" role="radiogroup" aria-label="Cómo quieres llegar">
+              @for (o of opcionesRuta(); track o.id) {
+                <button
+                  type="button"
+                  class="ruta"
+                  role="radio"
+                  [class.elegida]="transporte() === o.id"
+                  [attr.aria-checked]="transporte() === o.id"
+                  [disabled]="!o.disponible"
+                  (click)="elegirTransporte(o.id)"
+                >
+                  <ion-icon [name]="o.icono" aria-hidden="true"></ion-icon>
+                  <strong>{{ o.tiempo }}</strong>
+                  <span>{{ o.nombre }}</span>
+                </button>
+              }
+            </div>
+            @if (resumenRuta(); as r) {
+              <p class="ruta-resumen">
+                {{ r.distancia }} {{ r.id === 'pie' ? 'caminando' : r.id === 'bici' ? 'en bici' : 'en carro o moto' }}
+                @if (r.id === 'carro') {
+                  · tiempo sin contar el tráfico
+                }
+              </p>
+            }
+            <div class="iniciar-contenedor">
+              <ion-button class="boton-iniciar" expand="block" shape="round" (click)="iniciarNavegacion()">
+                <ion-icon slot="start" name="navigate"></ion-icon>
+                Iniciar
+              </ion-button>
+            </div>
+          }
+        }
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Selector de fecha y hora del recordatorio -->
+  <ion-modal class="hoja" [isOpen]="selectorFecha()" (didDismiss)="selectorFecha.set(false)" [initialBreakpoint]="0.86" [breakpoints]="[0, 0.86]">
+    <ng-template>
+      <ion-content>
+        <div class="hoja-cuerpo selector">
+          <div class="formulario-encabezado">
+            <button type="button" class="boton-icono" (click)="selectorFecha.set(false)" aria-label="Cerrar">
+              <ion-icon name="close"></ion-icon>
+            </button>
+            <div>
+              <span class="tarjeta-paso">Recordatorio</span>
+              <h2>¿Cuándo te avisamos?</h2>
+            </div>
+          </div>
+
+          <ion-datetime
+            presentation="date-time"
+            locale="es-CO"
+            hourCycle="h12"
+            [firstDayOfWeek]="1"
+            [min]="fechaMinima()"
+            [value]="fechaElegida()"
+            (ionChange)="alCambiarFecha($event)"
+          >
+            <span slot="time-label">Hora</span>
+          </ion-datetime>
+
+          <p class="selector-resumen" [class.error]="!fechaValida()">
+            <ion-icon [name]="fechaValida() ? 'notifications' : 'alert-circle-outline'" aria-hidden="true"></ion-icon>
+            {{ textoFechaElegida() }}
+          </p>
+
+          <ion-button class="boton-guardar" expand="block" shape="round" [disabled]="!fechaValida()" (click)="guardarFechaElegida()">
+            Guardar recordatorio
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Ficha completa del punto: se abre con "Ver más" o tocando la foto -->
+  <ion-modal class="ficha" [isOpen]="verMas() && detalle() !== null" (didDismiss)="cerrarFicha()">
+    <ng-template>
+      <ion-content>
+        @if (detalle(); as d) {
+          <div class="portada" [class.sin-foto]="!d.fotos.length">
+            @if (d.fotos.length) {
+              <div class="portada-tira" (scroll)="alDeslizarFotos($event)">
+                @for (foto of d.fotos; track $index) {
+                  <img [src]="foto" [alt]="'Foto ' + ($index + 1) + ' de ' + d.titulo" />
+                }
+              </div>
+              @if (d.fotos.length > 1) {
+                <span class="portada-contador">{{ fotoVisible() + 1 }} / {{ d.fotos.length }}</span>
+              }
+            } @else {
+              <ion-icon class="portada-icono" [name]="d.categoriaIcono" aria-hidden="true"></ion-icon>
+              <span class="portada-vacia">Este punto aún no tiene fotos</span>
+            }
+            <button type="button" class="portada-boton izquierda" (click)="cerrarFicha()" aria-label="Volver al mapa">
+              <ion-icon name="chevron-down"></ion-icon>
+            </button>
+            <button
+              type="button"
+              class="portada-boton derecha"
+              [class.activo]="d.favorito"
+              [attr.aria-pressed]="d.favorito"
+              [attr.aria-label]="d.favorito ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+              (click)="alternarFavorito()"
+            >
+              <ion-icon [name]="d.favorito ? 'heart' : 'heart-outline'"></ion-icon>
+            </button>
+          </div>
+
+          <div class="hoja-cuerpo">
+            <div class="detalle-etiquetas">
+              <span class="etiqueta-chip">{{ d.categoriaNombre }}</span>
+              @if (d.destacado) {
+                <span class="etiqueta-chip destacado">
+                  <ion-icon name="star" aria-hidden="true"></ion-icon>
+                  Destacado de Bogotá
+                </span>
+              } @else if (d.comunidad) {
+                <span class="etiqueta-chip comunidad">
+                  <ion-icon name="people" aria-hidden="true"></ion-icon>
+                  De la comunidad
+                </span>
+              } @else {
+                <span class="etiqueta-chip suave">Agregado por ti</span>
+              }
+              @if (d.esReporte) {
+                @if (d.resuelto) {
+                  <span class="etiqueta-chip enviado">
+                    <ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>
+                    Arreglado
+                  </span>
+                } @else {
+                  <span class="etiqueta-chip pendiente">Sin arreglar</span>
+                }
+              }
+              @if (d.favorito) {
+                <span class="etiqueta-chip favorito">Favorito</span>
+              }
+            </div>
+
+            <h2 class="detalle-titulo">{{ d.titulo }}</h2>
+            @if (d.nombre && d.direccion) {
+              <p class="detalle-direccion">{{ d.direccion }}</p>
+            }
+            @if (d.nota) {
+              <p class="detalle-nota">{{ d.nota }}</p>
+            }
+
+            <!-- Acciones rápidas -->
+            <div class="rapidas">
+              <button type="button" (click)="rutaDesdeFicha()">
+                <span><ion-icon name="walk-outline" aria-hidden="true"></ion-icon></span>
+                Cómo llegar
+              </button>
+              @if (d.editable) {
+                <button type="button" (click)="editarDesdeFicha()">
+                  <span><ion-icon name="create-outline" aria-hidden="true"></ion-icon></span>
+                  Editar
+                </button>
+              }
+              <button type="button" (click)="alternarFavorito()">
+                <span [class.activo]="d.favorito">
+                  <ion-icon [name]="d.favorito ? 'heart' : 'heart-outline'" aria-hidden="true"></ion-icon>
+                </span>
+                {{ d.favorito ? 'Guardado' : 'Favorito' }}
+              </button>
+              <button type="button" (click)="elegirRecordatorio()">
+                <span [class.activo]="recordatorioActual()">
+                  <ion-icon [name]="recordatorioActual() ? 'notifications' : 'notifications-outline'" aria-hidden="true"></ion-icon>
+                </span>
+                Recordar
+              </button>
+              <button type="button" (click)="compartir()">
+                <span><ion-icon name="share-social-outline" aria-hidden="true"></ion-icon></span>
+                Compartir
+              </button>
+            </div>
+
+            <!-- Recordatorio -->
+                        @if (recordatorioActual(); as r) {
+              <div class="recordatorio activo">
+                <span class="recordatorio-icono"><ion-icon name="alarm" aria-hidden="true"></ion-icon></span>
+                <div>
+                  <strong>{{ r.tipo === 'seguimiento' ? 'Revisar este reporte' : 'Visitar este lugar' }}</strong>
+                  <span>{{ r.texto }}</span>
+                </div>
+                <button type="button" class="enlace" (click)="elegirRecordatorio()">Cambiar</button>
+                <button type="button" class="recordatorio-quitar" (click)="cancelarRecordatorio()" aria-label="Cancelar recordatorio">
+                  <ion-icon name="close"></ion-icon>
+                </button>
+              </div>
+            } @else {
+              <button type="button" class="recordatorio" (click)="elegirRecordatorio()">
+                <span class="recordatorio-icono"><ion-icon name="alarm-outline" aria-hidden="true"></ion-icon></span>
+                <div>
+                  <strong>{{ d.categoria === 'reporte' ? 'Avísame para revisarlo' : 'Recordarme visitarlo' }}</strong>
+                  <span>Tú eliges el día y la hora; llega aunque Rolo esté cerrado</span>
+                </div>
+                <ion-icon class="recordatorio-flecha" name="chevron-forward" aria-hidden="true"></ion-icon>
+              </button>
+            }
+
+
+            <!-- Estado del reporte -->
+            @if (d.esReporte) {
+              <h3 class="seccion">Estado del reporte</h3>
+              @if (d.resuelto; as r) {
+                <div class="estado arreglado">
+                  <span class="estado-icono"><ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon></span>
+                  <div>
+                    <strong>Arreglado</strong>
+                    <span>Marcado el {{ d.arregladoTexto }}</span>
+                  </div>
+                  <button type="button" class="enlace" (click)="reabrirReporte()">Volver a abrir</button>
+                </div>
+
+                <div class="antes-despues">
+                  <figure>
+                    @if (d.fotos.length) {
+                      <img [src]="d.fotos[0]" alt="Antes de arreglarlo" />
+                    } @else {
+                      <span class="sin-foto"><ion-icon name="image-outline" aria-hidden="true"></ion-icon></span>
+                    }
+                    <figcaption>Antes</figcaption>
+                  </figure>
+                  <figure>
+                    @if (r.foto) {
+                      <img [src]="r.foto" alt="Después de arreglarlo" />
+                    } @else {
+                      <span class="sin-foto agregar">
+                        <button type="button" (click)="agregarFotoDespues('camara')" aria-label="Tomar foto del después">
+                          <ion-icon name="camera-outline"></ion-icon>
+                        </button>
+                        <button type="button" (click)="agregarFotoDespues('galeria')" aria-label="Elegir foto del después">
+                          <ion-icon name="images-outline"></ion-icon>
+                        </button>
+                      </span>
+                    }
+                    <figcaption class="verde">Después</figcaption>
+                  </figure>
+                </div>
+              } @else {
+                <div class="estado pendiente">
+                  <span class="estado-icono"><ion-icon name="warning" aria-hidden="true"></ion-icon></span>
+                  <div>
+                    <strong>Sin arreglar</strong>
+                    <span>Reportado el {{ d.fechaTexto }}</span>
+                  </div>
+                </div>
+                @if (d.confirmaciones > 0) {
+                  <p class="confirmaciones">
+                    <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
+                    {{ d.confirmaciones === 1 ? '1 persona más lo vio' : d.confirmaciones + ' personas más lo vieron' }}
+                  </p>
+                }
+                @if (d.comunidad) {
+                  <ion-button
+                    class="boton-confirmar"
+                    expand="block"
+                    shape="round"
+                    fill="outline"
+                    [disabled]="d.yaConfirme"
+                    (click)="confirmarReporte()"
+                  >
+                    <ion-icon slot="start" [name]="d.yaConfirme ? 'checkmark' : 'eye-outline'"></ion-icon>
+                    {{ d.yaConfirme ? 'Ya confirmaste que sigue ahí' : 'Yo también lo vi' }}
+                  </ion-button>
+                }
+                <ion-button class="boton-arreglado" expand="block" shape="round" (click)="marcarArreglado()">
+                  <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
+                  Marcar como arreglado
+                </ion-button>
+              }
+            }
+
+            <!-- Fotos -->
+            <h3 class="seccion">Fotos <small>{{ d.fotos.length }} de {{ maxFotos }}</small></h3>
+            <div class="fotos">
+              @for (foto of d.fotos; track $index) {
+                <div class="foto-mini">
+                  <img [src]="foto" [alt]="'Foto ' + ($index + 1)" />
+                  <button type="button" (click)="quitarFotoDelPunto($index)" [attr.aria-label]="'Quitar foto ' + ($index + 1)">
+                    <ion-icon name="close"></ion-icon>
+                  </button>
+                </div>
+              }
+              @if (d.fotos.length < maxFotos) {
+                <button type="button" class="foto-opcion principal" (click)="agregarFotoAlPunto('camara')">
+                  <ion-icon name="camera-outline" aria-hidden="true"></ion-icon>
+                  Cámara
+                </button>
+                <button type="button" class="foto-opcion" (click)="agregarFotoAlPunto('galeria')">
+                  <ion-icon name="images-outline" aria-hidden="true"></ion-icon>
+                  Galería
+                </button>
+              }
+            </div>
+
+            <!-- Información -->
+            <h3 class="seccion">Información</h3>
+            <ul class="datos">
+              <li>
+                <span class="dato-icono"><ion-icon name="location-outline" aria-hidden="true"></ion-icon></span>
+                <div>
+                  <small>Dirección</small>
+                  <p>{{ d.direccion || 'Sin dirección todavía' }}</p>
+                </div>
+                @if (d.editable) {
+                  <button type="button" class="enlace" (click)="editarDesdeFicha()">Cambiar</button>
+                }
+              </li>
+              <li>
+                <span class="dato-icono"><ion-icon name="compass-outline" aria-hidden="true"></ion-icon></span>
+                <div>
+                  <small>Coordenadas</small>
+                  <p class="numeros">{{ d.coordenadas }}</p>
+                </div>
+                <button type="button" class="enlace" (click)="copiarCoordenadas()">Copiar</button>
+              </li>
+              @if (d.distancia) {
+                <li>
+                  <span class="dato-icono"><ion-icon name="navigate-outline" aria-hidden="true"></ion-icon></span>
+                  <div>
+                    <small>Distancia desde donde estás</small>
+                    <p>{{ d.distancia }} en línea recta</p>
+                  </div>
+                </li>
+              }
+              <li>
+                <span class="dato-icono"><ion-icon name="calendar-outline" aria-hidden="true"></ion-icon></span>
+                <div>
+                  <small>Registrado</small>
+                  <p>{{ d.fechaTexto }}, {{ d.horaTexto }}</p>
+                </div>
+              </li>
+            </ul>
+
+            <button type="button" class="eliminar" (click)="eliminarPunto()">
+              <ion-icon [name]="d.comunidad ? 'eye-off-outline' : 'trash-outline'" aria-hidden="true"></ion-icon>
+              {{ d.comunidad ? 'Quitar de mi mapa' : 'Eliminar punto' }}
+            </button>
+          </div>
+        }
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>

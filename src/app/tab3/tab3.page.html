@@ -1,0 +1,110 @@
+<ion-content class="alertas">
+  <div class="pagina">
+    <h1>Ajustes</h1>
+    <p class="intro">Alertas, recordatorios y apariencia de Rolo.</p>
+
+    @if (!alertas.activadas()) {
+      <div class="activar">
+        <span class="activar-icono" aria-hidden="true"><ion-icon name="notifications"></ion-icon></span>
+        <div>
+          <strong>Activa las notificaciones</strong>
+          <span>
+            @if (alertas.permiso() === 'denied') {
+              Están bloqueadas. Actívalas en los ajustes del teléfono, en Aplicaciones → Rolo.
+            } @else {
+              Así Rolo te puede avisar aunque no tengas la app abierta.
+            }
+          </span>
+        </div>
+        @if (alertas.permiso() !== 'denied') {
+          <ion-button shape="round" (click)="activar()">Activar</ion-button>
+        }
+      </div>
+    }
+
+    <h2>Avisos de cercanía</h2>
+    <div class="opciones">
+      <button
+        type="button"
+        class="opcion"
+        role="switch"
+        [attr.aria-checked]="alertas.ajustes().reportes"
+        (click)="alertas.cambiarAjustes({ reportes: !alertas.ajustes().reportes })"
+      >
+        <span class="opcion-icono peligro"><ion-icon name="warning-outline" aria-hidden="true"></ion-icon></span>
+        <span class="opcion-texto">
+          <strong>Huecos y daños cerca</strong>
+          <small>A menos de {{ radioReportes }} m · {{ cantidadReportes() }} sin arreglar</small>
+        </span>
+        <span class="interruptor" [class.encendido]="alertas.ajustes().reportes"></span>
+      </button>
+      <button
+        type="button"
+        class="opcion"
+        role="switch"
+        [attr.aria-checked]="alertas.ajustes().favoritos"
+        (click)="alertas.cambiarAjustes({ favoritos: !alertas.ajustes().favoritos })"
+      >
+        <span class="opcion-icono"><ion-icon name="heart-outline" aria-hidden="true"></ion-icon></span>
+        <span class="opcion-texto">
+          <strong>Favoritos cerca</strong>
+          <small>A menos de {{ radioFavoritos }} m · {{ cantidadFavoritos() }} favoritos</small>
+        </span>
+        <span class="interruptor" [class.encendido]="alertas.ajustes().favoritos"></span>
+      </button>
+    </div>
+    <p class="nota">Estos avisos funcionan mientras Rolo está abierto.</p>
+
+    <h2>Recordatorios <small>{{ filas().length }}</small></h2>
+    @if (filas().length) {
+      <ul class="filas">
+        @for (f of filas(); track f.id) {
+          <li>
+            <button type="button" class="fila" (click)="abrir(f.puntoId)">
+              <span class="fila-foto">
+                <ion-icon [name]="f.icono" aria-hidden="true"></ion-icon>
+                @if (f.foto) {
+                  <img [src]="f.foto" alt="" />
+                }
+              </span>
+              <span class="fila-texto">
+                <strong>{{ f.titulo }}</strong>
+                <span>
+                  <ion-icon [name]="f.tipo === 'seguimiento' ? 'construct-outline' : 'time-outline'" aria-hidden="true"></ion-icon>
+                  {{ f.tipo === 'seguimiento' ? 'Revisar reporte' : 'Visitar' }} · {{ f.cuando }}
+                </span>
+              </span>
+            </button>
+            <button type="button" class="quitar" (click)="alertas.cancelar(f.id)" [attr.aria-label]="'Cancelar recordatorio de ' + f.titulo">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <div class="vacio">
+        <ion-icon name="alarm-outline" aria-hidden="true"></ion-icon>
+        <p>Sin recordatorios</p>
+        <small>Abre un lugar en el mapa, toca "Ver más" y elige "Recordarme".</small>
+      </div>
+    }
+
+    <h2>Apariencia</h2>
+    <div class="temas" role="radiogroup" aria-label="Apariencia">
+      @for (t of temas; track t.id) {
+        <button
+          type="button"
+          role="radio"
+          [class.elegido]="tema.tema() === t.id"
+          [attr.aria-checked]="tema.tema() === t.id"
+          (click)="tema.cambiar(t.id)"
+        >
+          <ion-icon [name]="t.icono" aria-hidden="true"></ion-icon>
+          {{ t.nombre }}
+        </button>
+      }
+    </div>
+    <p class="nota">Automático sigue el modo claro u oscuro de tu teléfono.</p>
+
+  </div>
+</ion-content>

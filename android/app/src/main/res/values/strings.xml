@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rolo</string>
+    <string name="title_activity_main">Rolo</string>
+    <string name="package_name">co.rolo.mapa</string>
+    <string name="custom_url_scheme">co.rolo.mapa</string>
+</resources>

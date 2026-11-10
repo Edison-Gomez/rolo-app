@@ -1,0 +1,10 @@
+<ion-app>
+  <ion-router-outlet></ion-router-outlet>
+
+  <!-- Pantalla de inicio: el logo y el nombre mientras cargan los lugares -->
+  @if (inicio()) {
+    <div class="inicio" [class.saliendo]="saliendo()" aria-hidden="true">
+      <img src="assets/inicio-rolo.png" alt="" />
+    </div>
+  }
+</ion-app>

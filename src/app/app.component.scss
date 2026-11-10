@@ -1,0 +1,37 @@
+// Pantalla de inicio: mismo amarillo que la del sistema para que el paso sea invisible.
+.inicio {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  background: #fcd702;
+  transition: opacity 0.45s ease;
+
+  img {
+    width: min(42vw, 190px);
+    animation: aparecer-logo 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  }
+
+  &.saliendo {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@keyframes aparecer-logo {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inicio img {
+    animation: none;
+  }
+}

@@ -1,0 +1,225 @@
+<ion-content class="lista">
+  <!-- Deslizar hacia abajo trae lo nuevo de la comunidad -->
+  <ion-refresher slot="fixed" (ionRefresh)="recargar($event)">
+    <ion-refresher-content
+      pullingText="Suelta para actualizar"
+      refreshingSpinner="crescent"
+      refreshingText="Trayendo los puntos de la comunidad…"
+    ></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="pagina">
+    <h1>Lugares</h1>
+
+    <div class="barra">
+      <label class="buscador">
+        <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+        <input
+          type="search"
+          enterkeyhint="search"
+          autocomplete="off"
+          placeholder="Busca tus lugares"
+          aria-label="Buscar puntos guardados"
+          [value]="busqueda()"
+          (input)="alBuscar($event)"
+        />
+        @if (busqueda()) {
+          <button type="button" (click)="busqueda.set('')" aria-label="Borrar búsqueda">
+            <ion-icon name="close"></ion-icon>
+          </button>
+        }
+      </label>
+
+      <button
+        type="button"
+        class="boton-filtros"
+        [class.activo]="filtrosActivos().length"
+        (click)="panelFiltros.set(true)"
+        [attr.aria-label]="'Filtros' + (filtrosActivos().length ? ', ' + filtrosActivos().length + ' aplicados' : '')"
+      >
+        <ion-icon name="options-outline" aria-hidden="true"></ion-icon>
+        @if (filtrosActivos().length) {
+          <span>{{ filtrosActivos().length }}</span>
+        }
+      </button>
+    </div>
+
+    @if (filtrosActivos().length) {
+      <div class="activos">
+        @for (f of filtrosActivos(); track f.texto) {
+          <button type="button" class="filtro-activo" (click)="f.quitar()" [attr.aria-label]="'Quitar filtro ' + f.texto">
+            {{ f.texto }}
+            <ion-icon name="close" aria-hidden="true"></ion-icon>
+          </button>
+        }
+        <button type="button" class="enlace" (click)="limpiarFiltros()">Limpiar todo</button>
+      </div>
+    }
+
+    <p class="conteo">
+      {{ total() }} {{ total() === 1 ? 'punto' : 'puntos' }} · {{ nombreDelOrden() }}
+    </p>
+
+    @for (grupo of grupos(); track grupo.titulo) {
+      @if (grupo.titulo) {
+        <h2 class="dia">{{ grupo.titulo }}</h2>
+      }
+      <ul class="filas">
+        @for (f of grupo.filas; track f.id) {
+          <li>
+            <button type="button" class="fila" (click)="abrir(f.id)">
+              <span class="fila-foto">
+                <ion-icon [name]="f.icono" aria-hidden="true"></ion-icon>
+                @if (f.foto) {
+                  <img [src]="f.foto" alt="" />
+                }
+              </span>
+              <span class="fila-texto">
+                <strong>
+                  {{ f.titulo }}
+                  @if (f.favorito) {
+                    <ion-icon name="heart" aria-label="Favorito"></ion-icon>
+                  }
+                </strong>
+                <span>{{ f.subtitulo }}</span>
+                @if (f.estadoReporte) {
+                  <span class="fila-estado" [class.arreglado]="f.estadoReporte === 'arreglado'">
+                    {{ f.estadoReporte === 'arreglado' ? 'Arreglado' : 'Sin arreglar' }}
+                  </span>
+                }
+              </span>
+              @if (f.distancia) {
+                <span class="fila-hora">{{ f.distancia }}</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    } @empty {
+      <div class="vacio">
+        <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
+        @if (busqueda().trim()) {
+          <p>Sin resultados para “{{ busqueda().trim() }}”</p>
+          <small>Prueba con otra palabra o quita los filtros.</small>
+        } @else {
+          <p>No hay puntos con estos filtros</p>
+          <small>Quita algún filtro o agrega un punto desde el mapa.</small>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Panel de filtros -->
+  <ion-modal
+    class="hoja"
+    [isOpen]="panelFiltros()"
+    (didDismiss)="panelFiltros.set(false)"
+    [initialBreakpoint]="0.92"
+    [breakpoints]="[0, 0.92]"
+  >
+    <ng-template>
+      <ion-content>
+        <div class="panel">
+          <div class="panel-encabezado">
+            <h2>Filtros</h2>
+            <button type="button" class="enlace" [disabled]="!filtrosActivos().length" (click)="limpiarFiltros()">
+              Limpiar todo
+            </button>
+          </div>
+
+          <h3>Ordenar por</h3>
+          <div class="opciones" role="radiogroup" aria-label="Ordenar por">
+            @for (o of ordenes; track o.id) {
+              <button
+                type="button"
+                class="opcion"
+                role="radio"
+                [attr.aria-checked]="orden() === o.id"
+                (click)="orden.set(o.id)"
+              >
+                <span class="opcion-icono"><ion-icon [name]="o.icono" aria-hidden="true"></ion-icon></span>
+                <span class="opcion-texto">{{ o.nombre }}</span>
+                <span class="redondo" [class.marcado]="orden() === o.id"></span>
+              </button>
+            }
+          </div>
+          @if (orden() === 'cercanos' && !datos.miUbicacion()) {
+            <p class="panel-nota">Abre el mapa y permite la ubicación para ordenar por cercanía.</p>
+          }
+
+          <h3>Mostrar</h3>
+          <div class="segmento" role="group" aria-label="Qué puntos mostrar">
+            @for (o of origenes; track o.id) {
+              <button
+                type="button"
+                [class.elegido]="filtroOrigen() === o.id"
+                [attr.aria-pressed]="filtroOrigen() === o.id"
+                (click)="filtroOrigen.set(o.id)"
+              >
+                {{ o.nombre }}
+              </button>
+            }
+          </div>
+          <p class="panel-nota">
+            Destacados son los lugares famosos de Bogotá que vienen con la app. Míos son los que agregaste tú.
+          </p>
+
+          <h3>Favoritos</h3>
+          <button
+            type="button"
+            class="opcion"
+            role="switch"
+            [attr.aria-checked]="soloFavoritos()"
+            (click)="soloFavoritos.set(!soloFavoritos())"
+          >
+            <span class="opcion-icono"><ion-icon name="heart-outline" aria-hidden="true"></ion-icon></span>
+            <span class="opcion-texto">Solo mis favoritos</span>
+            <span class="opcion-cantidad">{{ cantidadFavoritos() }}</span>
+            <span class="interruptor" [class.encendido]="soloFavoritos()"></span>
+          </button>
+
+          <h3>Reportes</h3>
+          <button
+            type="button"
+            class="opcion"
+            role="switch"
+            [attr.aria-checked]="ocultarArreglados()"
+            (click)="ocultarArreglados.set(!ocultarArreglados())"
+          >
+            <span class="opcion-icono verde"><ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon></span>
+            <span class="opcion-texto">Ocultar los ya arreglados</span>
+            <span class="opcion-cantidad">{{ cantidadArreglados() }}</span>
+            <span class="interruptor" [class.encendido]="ocultarArreglados()"></span>
+          </button>
+
+          <h3>Categorías</h3>
+          <div class="opciones">
+            @for (c of categoriasConConteo(); track c.id) {
+              <button
+                type="button"
+                class="opcion"
+                role="checkbox"
+                [attr.aria-checked]="categoriasElegidas().includes(c.id)"
+                [class.vacia]="!c.cantidad"
+                (click)="alternarCategoria(c.id)"
+              >
+                <span class="opcion-icono"><ion-icon [name]="c.icono" aria-hidden="true"></ion-icon></span>
+                <span class="opcion-texto">{{ c.nombre }}</span>
+                <span class="opcion-cantidad">{{ c.cantidad }}</span>
+                <span class="casilla" [class.marcada]="categoriasElegidas().includes(c.id)">
+                  <ion-icon name="checkmark" aria-hidden="true"></ion-icon>
+                </span>
+              </button>
+            }
+          </div>
+        </div>
+      </ion-content>
+
+      <div class="panel-pie">
+        <ion-button expand="block" shape="round" (click)="panelFiltros.set(false)">
+          Ver {{ total() }} {{ total() === 1 ? 'punto' : 'puntos' }}
+        </ion-button>
+      </div>
+    </ng-template>
+  </ion-modal>
+</ion-content>

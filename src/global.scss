@@ -1,0 +1,394 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/**
+ * Ionic Dark Mode
+ * -----------------------------------------------------
+ * For more info, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* Modo oscuro: se activa con la clase .ion-palette-dark (ver tema.service.ts). */
+@import "@ionic/angular/css/palettes/dark.class.css";
+
+/* ---------------------------------------------------------------------------
+   Paleta de la app: los colores de la bandera de Bogotá (rojo y amarillo)
+   sobre tonos neutros cálidos.
+   - Rojo: acciones principales y selección.
+   - Amarillo: solo como acento de marca (logo, pin seleccionado).
+   - Ámbar: avisos y reportes sin arreglar.
+   - Verde: reportes arreglados.
+   - Azul: tu ubicación y las rutas.
+   --------------------------------------------------------------------------- */
+:root {
+  --ion-color-primary: #c8102e;
+  --ion-color-primary-rgb: 200, 16, 46;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #b00e28;
+  --ion-color-primary-tint: #ce2843;
+
+  --ion-color-danger: #b42318;
+  --ion-color-danger-rgb: 180, 35, 24;
+
+  --app-amarillo: #ffcd00;
+  --app-fondo: #f6f3ee;
+  --app-superficie: #ffffff;
+  --app-borde: #ebe6de;
+  --app-borde-fuerte: #d8d1c6;
+  --app-texto: #1b1410;
+  --app-texto-suave: #6f665d;
+  --app-ambar: #d97706;
+  --app-ambar-texto: #92400e;
+  --app-ambar-fondo: #fdf0d5;
+  --app-verde: #1a7f4b;
+  --app-verde-fondo: #e3f3ea;
+  --app-hoja: #fbfaf7;
+  --app-azul: #1d4ed8;
+  --app-azul-suave: #eef2fd;
+  --app-amarillo-suave: #fff3c2;
+  --app-amarillo-texto: #7a5c00;
+
+  --ion-background-color: #ffffff;
+  --ion-text-color: #1b1410;
+  --ion-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* Modo oscuro de Rolo: los mismos rojo y amarillo de Bogotá, un poco más
+   luminosos, sobre neutros cálidos oscuros. */
+html.ion-palette-dark,
+html.ion-palette-dark.md,
+html.ion-palette-dark.ios {
+  --ion-color-primary: #ea3550;
+  --ion-color-primary-rgb: 234, 53, 80;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #ce2f46;
+  --ion-color-primary-tint: #ec4962;
+
+  --ion-color-danger: #f26b5e;
+  --ion-color-danger-rgb: 242, 107, 94;
+
+  --app-amarillo: #ffcd00;
+  --app-fondo: #14110f;
+  --app-superficie: #201c19;
+  --app-borde: #2f2a26;
+  --app-borde-fuerte: #453d37;
+  --app-texto: #f3eee8;
+  --app-texto-suave: #a99f95;
+  --app-ambar: #f59e0b;
+  --app-ambar-texto: #fbbf5c;
+  --app-ambar-fondo: #3a2a0e;
+  --app-verde: #4cc38a;
+  --app-verde-fondo: #12301f;
+  --app-hoja: #1a1714;
+  --app-azul: #7ea6ff;
+  --app-azul-suave: #1d2742;
+  --app-amarillo-suave: #3a3208;
+  --app-amarillo-texto: #ffd84d;
+
+  --ion-background-color: #1a1714;
+  --ion-background-color-rgb: 26, 23, 20;
+  --ion-text-color: #f3eee8;
+  --ion-text-color-rgb: 243, 238, 232;
+  --ion-overlay-background-color: #26211d;
+  --ion-item-background: #201c19;
+  --ion-toolbar-background: #1a1714;
+  --ion-tab-bar-background: #201c19;
+}
+
+/* En oscuro el mapa también se oscurece; las fotos de los pines no cambian. */
+html.ion-palette-dark .leaflet-container {
+  background: #191919;
+}
+
+html.ion-palette-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.55);
+}
+
+html.ion-palette-dark .leaflet-container .leaflet-control-attribution {
+  background: rgba(32, 28, 25, 0.8);
+  color: #a99f95;
+}
+
+html.ion-palette-dark .leaflet-container .leaflet-control-attribution a {
+  color: #c9c1b8;
+}
+
+/* "Mi ubicación" en el mapa: punto azul con borde blanco y un halo que late.
+   Lo crea Leaflet fuera de la vista de Angular, por eso va en el global. */
+.marcador-yo {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.yo-punto,
+.yo-halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.yo-punto {
+  width: 22px;
+  height: 22px;
+  border: 4px solid #fff;
+  background: #1d4ed8;
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.yo-halo {
+  width: 22px;
+  height: 22px;
+  background: rgba(29, 78, 216, 0.35);
+  animation: latido-yo 2s ease-out infinite;
+}
+
+@keyframes latido-yo {
+  0% {
+    width: 22px;
+    height: 22px;
+    opacity: 0.9;
+  }
+  100% {
+    width: 64px;
+    height: 64px;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yo-halo {
+    animation: none;
+    width: 40px;
+    height: 40px;
+    opacity: 0.4;
+  }
+}
+
+/* Pin de cada lugar: círculo con la foto en miniatura y una punta abajo.
+   También lo crea Leaflet, por eso va aquí. */
+.pin-lugar-contenedor {
+  background: none;
+  border: none;
+}
+
+.pin-lugar {
+  --pin-borde: #ffffff;
+  position: relative;
+  width: 48px;
+  height: 58px;
+  filter: drop-shadow(0 4px 6px rgba(27, 20, 16, 0.35));
+  transition: transform 0.18s ease;
+  transform-origin: 50% 100%;
+}
+
+.pin-lugar::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--pin-borde);
+  border-radius: 3px;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.pin-circulo {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 3px solid var(--pin-borde);
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: #fff;
+  font-size: 22px;
+}
+
+.pin-circulo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Seleccionado: más grande y con el amarillo de Bogotá */
+.pin-lugar.activo {
+  --pin-borde: var(--app-amarillo);
+  transform: scale(1.22);
+}
+
+/* Favorito: corazón pequeño sobre el pin */
+.pin-lugar.favorito::before {
+  content: "♥";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* Ficha completa del punto */
+ion-modal.ficha {
+  --background: var(--app-hoja);
+}
+
+ion-modal.ficha ion-content {
+  --background: var(--app-hoja);
+}
+
+/* Reporte arreglado: borde verde y una marca de verificación */
+.pin-lugar.arreglado {
+  --pin-borde: var(--app-verde);
+}
+
+.pin-check {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--app-verde);
+  color: #fff;
+  font-size: 12px;
+}
+
+/* Pines agrupados al alejar el mapa: la foto de uno de los lugares con la cantidad */
+.grupo-lugares-contenedor {
+  background: none;
+  border: none;
+}
+
+.grupo-lugares {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 4px 8px rgba(27, 20, 16, 0.4));
+}
+
+.grupo-circulo {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: #fff;
+  font-size: 24px;
+}
+
+.grupo-circulo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Un segundo borde detrás sugiere que son varios lugares apilados */
+.grupo-lugares::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+}
+
+.grupo-cuenta {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--ion-color-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+
+/* Botones de las alertas y menús sin mayúsculas, como el resto de la app */
+ion-alert .alert-button,
+ion-action-sheet .action-sheet-button {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Mientras se navega se esconde la barra de pestañas */
+body.rolo-navegando ion-tab-bar {
+  display: none;
+}
+
+/* Mientras se busca: pines que no coinciden */
+.pin-lugar.atenuado {
+  opacity: 0.28;
+  filter: grayscale(1);
+}
+
+/* Créditos del mapa más discretos */
+.leaflet-container .leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+/* Hojas que suben desde abajo */
+ion-modal.hoja {
+  --border-radius: 26px;
+  --background: var(--app-hoja);
+}
+
+ion-modal.hoja ion-content {
+  --background: var(--app-hoja);
+}
